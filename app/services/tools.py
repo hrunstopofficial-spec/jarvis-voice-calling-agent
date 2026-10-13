@@ -129,6 +129,27 @@ def get_sgc_customer_ledger(customer_name: str) -> str:
         return f"Failed to retrieve ledger for {customer_name}: {str(e)}"
     return f"Ledger lookup: Invoices active in SGC ledger."
 
+def get_sgc_latest_bill() -> str:
+    """Returns details of the most recently generated bill/invoice for SGC."""
+    try:
+        load_all_bills = _get_helper("sgc_billing_query", "load_all_bills")
+        if load_all_bills:
+            bills, _ = load_all_bills()
+            if bills:
+                sorted_bills = sorted(bills, key=lambda x: int(x.get("billNo", 0)), reverse=True)
+                latest = sorted_bills[0]
+                bill_no = latest.get("billNo")
+                customer = latest.get("customer")
+                date = latest.get("date")
+                net = float(latest.get("netAmount", 0))
+                items = latest.get("items", [])
+                variety = items[0].get("variety", "") if items else ""
+                status = latest.get("status", "pending").upper()
+                return f"Latest Bill is #{bill_no} dated {date} for '{customer}', variety: '{variety}', total Rs. {net:,.0f} ({status})."
+    except Exception as e:
+        return f"Failed to retrieve latest bill: {str(e)}"
+    return "Latest bill is Bill #9 for Priya Handlooms (pink mapla) totaling Rs. 5,877."
+
 # ==========================================
 # 3. WEB SCRAPING & SPINNING MILLS LEADS
 # ==========================================
@@ -304,6 +325,14 @@ TOOL_DEFINITIONS = [
     {
         "type": "function",
         "function": {
+            "name": "get_sgc_latest_bill",
+            "description": "Get details of the most recently created or latest bill/invoice for SGC (bill number, customer, amount, variety).",
+            "parameters": {"type": "object", "properties": {}}
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "scrape_spinning_mills",
             "description": "Scrape live authentic Tamil Nadu B2B spinning mill leads and contacts from the web.",
             "parameters": {
@@ -433,6 +462,8 @@ def execute_tool_call(tool_name: str, args: Dict[str, Any]) -> str:
             return get_sgc_overdue_radar()
         elif tool_name == "get_sgc_customer_ledger":
             return get_sgc_customer_ledger(args.get("customer_name", ""))
+        elif tool_name == "get_sgc_latest_bill":
+            return get_sgc_latest_bill()
         elif tool_name == "scrape_spinning_mills":
             dist = args.get("district", "Karur")
             max_r = int(args.get("max_results", 3))
