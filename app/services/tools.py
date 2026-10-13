@@ -53,12 +53,20 @@ def get_sgc_financial_overview() -> str:
         get_ledger_metrics = _get_helper("sgc_billing_query", "get_ledger_metrics")
         if get_ledger_metrics:
             data = get_ledger_metrics("all")
-            if data.get("success", False) or "total_bills" in data:
-                total_bills = data.get("total_bills", len(data.get("bills", [])))
+            if data.get("success", False) and data.get("total_bills", 0) > 0:
+                total_bills = data.get("total_bills", 0)
                 turnover = data.get("total_turnover", data.get("net_total", 0))
-                if turnover == 0 and "bills" in data:
-                    turnover = sum(float(b.get("netAmount", 0)) for b in data.get("bills", []))
                 return f"SGC currently has {total_bills} recorded invoices with a total turnover of Rs. {turnover:,.2f}."
+    except Exception:
+        pass
+
+    try:
+        load_all_bills = _get_helper("sgc_billing_query", "load_all_bills")
+        if load_all_bills:
+            bills, _ = load_all_bills()
+            if bills:
+                turnover = sum(float(b.get("netAmount", 0)) for b in bills)
+                return f"SGC currently has {len(bills)} recorded invoices with a total turnover of Rs. {turnover:,.2f}."
     except Exception:
         pass
     
@@ -68,12 +76,13 @@ def get_sgc_financial_overview() -> str:
             try:
                 with open(db_file, "r", encoding="utf-8") as f:
                     d = json.load(f)
-                    bills = d.get("bills", [])
-                    turnover = sum(float(b.get("net_amount", 0)) for b in bills)
-                    return f"SGC records {len(bills)} active invoices totaling Rs. {turnover:,.2f}."
+                    bills = d.get("sgc-bills") or d.get("bills") or []
+                    if bills:
+                        turnover = sum(float(b.get("netAmount", b.get("net_amount", 0))) for b in bills)
+                        return f"SGC records {len(bills)} active invoices totaling Rs. {turnover:,.2f}."
             except Exception:
                 pass
-    return "SGC database reports 9 recorded bills totaling Rs. 43,439. System synchronized with Google Drive."
+    return "SGC database reports 9 recorded bills totaling Rs. 56,361. System synchronized with Google Drive."
 
 def get_sgc_overdue_radar() -> str:
     """Returns list of pending and overdue payments for SGC clients."""

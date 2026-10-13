@@ -10,7 +10,13 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-from tools.sgc_billing_query import load_all_bills
+try:
+    from ecosystem.sgc_billing_query import load_all_bills
+except ImportError:
+    try:
+        from tools.sgc_billing_query import load_all_bills
+    except ImportError:
+        from sgc_billing_query import load_all_bills
 
 def get_overdue_report() -> dict:
     """Analyzes pending bills in SGC Billing and returns overdue analysis & follow-up messages."""
