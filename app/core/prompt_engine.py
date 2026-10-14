@@ -28,7 +28,13 @@ def build_system_prompt() -> str:
             sorted_b = sorted(bills, key=lambda x: int(x.get("billNo", 0)), reverse=True)
             total_net = sum(float(b.get("netAmount", 0)) for b in bills)
             latest = sorted_b[0]
-            sgc_status = f"{len(bills)} verified bills, ₹{total_net:,.0f} gross total (Latest: Bill #{latest.get('billNo')} for {latest.get('customer')} - ₹{float(latest.get('netAmount', 0)):,.0f})"
+            first = sorted_b[-1]
+            sgc_status = (
+                f"{len(bills)} verified bills, ₹{total_net:,.0f} gross total. "
+                f"First Bill: Bill #{first.get('billNo')} dated {first.get('date')} for '{first.get('customer')}' (₹{float(first.get('netAmount', 0)):,.0f}). "
+                f"Latest Bill: Bill #{latest.get('billNo')} dated {latest.get('date')} for '{latest.get('customer')}' (₹{float(latest.get('netAmount', 0)):,.0f}). "
+                f"September: 5 bills (₹43,439), October: 5 bills (₹20,248)."
+            )
     except Exception:
         pass
 

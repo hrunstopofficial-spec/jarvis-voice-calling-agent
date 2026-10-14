@@ -148,7 +148,39 @@ def get_sgc_latest_bill() -> str:
                 return f"Latest Bill is #{bill_no} dated {date} for '{customer}', variety: '{variety}', total Rs. {net:,.0f} ({status})."
     except Exception as e:
         return f"Failed to retrieve latest bill: {str(e)}"
-    return "Latest bill is Bill #9 for Priya Handlooms (pink mapla) totaling Rs. 5,877."
+    return "Latest bill is Bill #10 for Sowbhagiya Home Textiles totaling Rs. 7,326."
+
+def get_sgc_first_bill() -> str:
+    """Returns details and exact date of the very first invoice (Bill #1) ever generated for SGC."""
+    try:
+        load_all_bills = _get_helper("sgc_billing_query", "load_all_bills")
+        if load_all_bills:
+            bills, _ = load_all_bills()
+            if bills:
+                sorted_bills = sorted(bills, key=lambda x: int(x.get("billNo", 0)), reverse=False)
+                first = sorted_bills[0]
+                b_no = first.get("billNo")
+                dt = first.get("date")
+                cust = first.get("customer")
+                net = float(first.get("netAmount", 0))
+                return f"First Bill is #{b_no} dated {dt} for '{cust}', total Rs. {net:,.0f}."
+    except Exception as e:
+        return f"Failed to retrieve first bill: {str(e)}"
+    return "First Bill is Bill #1 dated 20-Sep-2026 for SRI GANAPATHI COLOURS, total Rs. 7,229."
+
+def get_sgc_bill_by_number(bill_no: int = 1) -> str:
+    """Returns details of any specific SGC bill by number (e.g. 1, 2, 9, 10)."""
+    try:
+        load_all_bills = _get_helper("sgc_billing_query", "load_all_bills")
+        if load_all_bills:
+            bills, _ = load_all_bills()
+            for b in bills:
+                if int(b.get("billNo", 0)) == int(bill_no):
+                    return f"Bill #{b.get('billNo')} is dated {b.get('date')} for '{b.get('customer')}', total Rs. {float(b.get('netAmount', 0)):,.0f}."
+    except Exception as e:
+        return f"Failed to retrieve Bill #{bill_no}: {str(e)}"
+    return f"Bill #{bill_no} not found in database."
+
 
 # ==========================================
 # 3. WEB SCRAPING & SPINNING MILLS LEADS

@@ -20,6 +20,43 @@ async def process_user_turn(user_message: str) -> str:
     conversation_transcript = session_memory.format_history_for_prompt()
     dynamic_tools = get_dynamic_mcp_tools()
 
+    # =========================================================================
+    # 0. Deterministic Ground-Truth Reflex Gate (< 10ms Zero-Hallucination)
+    # =========================================================================
+    clean_msg = user_message.lower().strip()
+    from app.services.tools import get_sgc_first_bill, get_sgc_latest_bill, get_sgc_financial_overview, get_sgc_overdue_radar
+
+    if any(k in clean_msg for k in ["first bill", "1st bill", "muthal bill", "starting bill"]):
+        reply = f"Boss, {get_sgc_first_bill()} Any specific invoice details venuma?"
+        session_memory.add_turn("user", user_message)
+        session_memory.add_turn("assistant", reply)
+        return reply
+
+    if any(k in clean_msg for k in ["last bill", "latest bill", "kadaisi bill", "recent bill"]):
+        reply = f"Boss, {get_sgc_latest_bill()} Payment chase panlama?"
+        session_memory.add_turn("user", user_message)
+        session_memory.add_turn("assistant", reply)
+        return reply
+
+    if any(k in clean_msg for k in ["total bill", "motha bill", "ethana bill", "turnover"]) and "customer" not in clean_msg:
+        reply = f"Boss, {get_sgc_financial_overview()} Any specific client balance to check?"
+        session_memory.add_turn("user", user_message)
+        session_memory.add_turn("assistant", reply)
+        return reply
+
+    # Filter to lean active voice tools to prevent Groq TPM rate limits (8000 TPM limit)
+    essential_names = {
+        'get_sgc_latest_bill', 'sgc_get_latest_bill',
+        'get_sgc_first_bill', 'sgc_get_first_bill',
+        'get_sgc_bill_by_number', 'sgc_get_bill_by_number',
+        'get_sgc_financial_overview', 'sgc_get_financial_overview',
+        'sgc_get_customer_ledger', 'sgc_get_overdue_radar',
+        'get_pc_vitals', 'search_live_web', 'scrape_spinning_mills'
+    }
+    voice_tools = [t for t in dynamic_tools if t.get('function', {}).get('name') in essential_names]
+    if not voice_tools:
+        voice_tools = dynamic_tools
+
     # 1. Primary: Ultra-Fast Autonomous Groq Agent with FastMCP Tool Calling
     if GROQ_API_KEY:
         try:
@@ -39,12 +76,12 @@ async def process_user_turn(user_message: str) -> str:
             # Multi-turn Autonomous Tool Loop (up to 3 investigative steps)
             for step in range(3):
                 completion = groq_client.chat.completions.create(
-                    model="openai/gpt-oss-120b",
+                    model="openai/gpt-oss-20b",
                     messages=messages,
-                    tools=dynamic_tools,
+                    tools=voice_tools,
                     tool_choice="auto",
-                    max_tokens=350,
-                    temperature=0.6
+                    max_tokens=300,
+                    temperature=0.5
                 )
                 choice = completion.choices[0]
                 message = choice.message
@@ -78,7 +115,7 @@ async def process_user_turn(user_message: str) -> str:
 
             # If 3 steps executed, generate final voice synthesis
             final_turn = groq_client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+                model="openai/gpt-oss-20b",
                 messages=messages + [{"role": "user", "content": "Synthesize all investigative tool outputs into a single crisp, confident spoken Tanglish reply under 25 words."}],
                 max_tokens=250,
                 temperature=0.6

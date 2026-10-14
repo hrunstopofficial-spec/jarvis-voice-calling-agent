@@ -35,7 +35,9 @@ from app.services.tools import (
     search_drive_vault,
     get_career_and_placement_intel,
     send_telegram_alert,
-    get_sgc_latest_bill
+    get_sgc_latest_bill,
+    get_sgc_first_bill,
+    get_sgc_bill_by_number
 )
 
 def get_dynamic_mcp_tools() -> List[Dict[str, Any]]:
@@ -82,6 +84,64 @@ def get_dynamic_mcp_tools() -> List[Dict[str, Any]]:
                 "name": "get_sgc_latest_bill",
                 "description": "Get details of the most recently created or latest bill/invoice for SGC (bill number, customer, amount, variety).",
                 "parameters": {"type": "object", "properties": {}}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "sgc_get_latest_bill",
+                "description": "Get details of the latest bill/invoice for SGC.",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_sgc_first_bill",
+                "description": "Get details and exact date of the very first bill (Bill #1) ever created for SGC.",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "sgc_get_first_bill",
+                "description": "Get details and exact date of the very first bill (Bill #1) ever created for SGC.",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_sgc_bill_by_number",
+                "description": "Get details and date of a specific SGC invoice by bill number (e.g. bill 1, 2, 5, 9, 10).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "bill_no": {
+                            "type": "integer",
+                            "description": "The numeric invoice/bill number, e.g. 1"
+                        }
+                    },
+                    "required": ["bill_no"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "sgc_get_bill_by_number",
+                "description": "Get details of a specific SGC invoice by bill number.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "bill_no": {
+                            "type": "integer",
+                            "description": "The numeric invoice/bill number, e.g. 1"
+                        }
+                    },
+                    "required": ["bill_no"]
+                }
             }
         },
         {
@@ -180,15 +240,24 @@ async def execute_mcp_or_system_tool(tool_name: str, args: Dict[str, Any]) -> st
         if mcp_tool:
             try:
                 result = await mcp_tool.run(args)
-                return str(result)
+                out_str = str(result)
+                # Keep tool output under 600 chars to prevent Groq TPM rate limiting
+                if len(out_str) > 600:
+                    out_str = out_str[:600] + "\n...[Summary truncated for voice latency]"
+                return out_str
             except Exception as e:
                 logger.error(f"[FastMCP Error] Tool '{tool_name}' failed: {e}")
                 return f"FastMCP tool error: {str(e)}"
 
     # 2. Check Ecosystem Tools
     try:
-        if tool_name == "get_sgc_latest_bill":
+        if tool_name in ["get_sgc_latest_bill", "sgc_get_latest_bill"]:
             return get_sgc_latest_bill()
+        elif tool_name in ["get_sgc_first_bill", "sgc_get_first_bill"]:
+            return get_sgc_first_bill()
+        elif tool_name in ["get_sgc_bill_by_number", "sgc_get_bill_by_number"]:
+            b_num = int(args.get("bill_no", 1))
+            return get_sgc_bill_by_number(b_num)
         elif tool_name == "get_pc_vitals":
             return get_pc_vitals()
         elif tool_name == "scrape_spinning_mills":
