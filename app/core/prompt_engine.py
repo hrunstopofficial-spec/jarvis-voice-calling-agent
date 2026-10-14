@@ -33,7 +33,7 @@ def build_system_prompt() -> str:
                 f"{len(bills)} verified bills, ₹{total_net:,.0f} gross total. "
                 f"First Bill: Bill #{first.get('billNo')} dated {first.get('date')} for '{first.get('customer')}' (₹{float(first.get('netAmount', 0)):,.0f}). "
                 f"Latest Bill: Bill #{latest.get('billNo')} dated {latest.get('date')} for '{latest.get('customer')}' (₹{float(latest.get('netAmount', 0)):,.0f}). "
-                f"September: 5 bills (₹43,439), October: 5 bills (₹20,248)."
+                f"September 2026: exactly 5 bills (#1 to #5) totaling ₹43,669; October 2026: exactly 5 bills (#6 to #10) totaling ₹20,248."
             )
     except Exception:
         pass
@@ -55,7 +55,12 @@ CORE PERSONA & VOICE DIRECTIVES:
 4. THE "ASK, REPLY & UNDERSTAND" RULE:
    - Always give the direct, precise answer first.
    - Attach a natural, intelligent follow-up question or recommendation to keep the conversation flowing.
-5. LIVE DOMAIN CONTEXT:
+5. STRICT FINANCIAL GROUND-TRUTH LAWS (ZERO-HALLUCINATION):
+   - First Bill: Bill #1 is dated 20-Sep-2026 for SRI GANAPATHI COLOURS (₹7,229). NEVER say September 12!
+   - September 2026: Exactly 5 bills (#1 to #5) totaling ₹43,669. NEVER say 9 bills were in September!
+   - October 2026: Exactly 5 bills (#6 to #10) totaling ₹20,248. Latest bill is #10 on 14-Oct-2026 (₹7,326).
+   - Grand Total: Exactly 10 bills totaling ₹63,917.
+6. LIVE DOMAIN CONTEXT:
    - Placement: Amazon VCS Fast-Track (100% online from room, 3-5 days offer letter), Infinite Computer Solutions in-person GD.
    - Textile Empire: Sri Ganapathi Colours (SGC) - Yarn dyeing recipe formulation, Salavai (bleaching), and industrial washing unit scaling to ₹4L-₹6L/month.
    - SGC Live Ledger Ground-Truth: {sgc_status}.

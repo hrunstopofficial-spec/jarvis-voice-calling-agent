@@ -24,7 +24,24 @@ async def process_user_turn(user_message: str) -> str:
     # 0. Deterministic Ground-Truth Reflex Gate (< 10ms Zero-Hallucination)
     # =========================================================================
     clean_msg = user_message.lower().strip()
-    from app.services.tools import get_sgc_first_bill, get_sgc_latest_bill, get_sgc_financial_overview, get_sgc_overdue_radar
+    from app.services.tools import (
+        get_sgc_first_bill, get_sgc_latest_bill,
+        get_sgc_financial_overview, get_sgc_overdue_radar,
+        get_sgc_month_breakdown
+    )
+
+    # Month-specific queries (September / October)
+    if "september" in clean_msg or "sep month" in clean_msg or "sep bills" in clean_msg:
+        reply = f"Boss, {get_sgc_month_breakdown('september')} (Bill #1 to #5, first bill dated 20-Sep-2026). Need breakdown?"
+        session_memory.add_turn("user", user_message)
+        session_memory.add_turn("assistant", reply)
+        return reply
+
+    if "october" in clean_msg or "oct month" in clean_msg or "oct bills" in clean_msg:
+        reply = f"Boss, {get_sgc_month_breakdown('october')} (Bill #6 to #10, latest Bill #10 dated 14-Oct-2026). Need breakdown?"
+        session_memory.add_turn("user", user_message)
+        session_memory.add_turn("assistant", reply)
+        return reply
 
     if any(k in clean_msg for k in ["first bill", "1st bill", "muthal bill", "starting bill"]):
         reply = f"Boss, {get_sgc_first_bill()} Any specific invoice details venuma?"
@@ -39,7 +56,7 @@ async def process_user_turn(user_message: str) -> str:
         return reply
 
     if any(k in clean_msg for k in ["total bill", "motha bill", "ethana bill", "turnover"]) and "customer" not in clean_msg:
-        reply = f"Boss, {get_sgc_financial_overview()} Any specific client balance to check?"
+        reply = f"Boss, {get_sgc_financial_overview()} (September: 5 bills Rs 43,669; October: 5 bills Rs 20,248). Any client ledger to check?"
         session_memory.add_turn("user", user_message)
         session_memory.add_turn("assistant", reply)
         return reply

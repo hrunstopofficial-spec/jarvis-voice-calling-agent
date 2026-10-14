@@ -139,7 +139,11 @@ async function acceptCall() {
     listenAgain();
 }
 
+let isFetchingTurn = false;
+
 async function sendTurnToJARVIS(text) {
+    if (isFetchingTurn) return;
+    isFetchingTurn = true;
     document.getElementById('callStatus').innerText = "JARVIS THINKING...";
     try {
         const res = await fetch('/api/chat', {
@@ -154,6 +158,8 @@ async function sendTurnToJARVIS(text) {
         }
     } catch(e) {
         appendTranscript("JARVIS", "Boss, connection issue. Repeat panlama?");
+    } finally {
+        isFetchingTurn = false;
     }
 
     listenAgain();
