@@ -36,21 +36,29 @@ async def process_user_turn(user_message: str) -> str:
             
             messages.append({"role": "user", "content": user_message})
 
-            # First turn inference with dynamic MCP tools enabled
-            completion = groq_client.chat.completions.create(
-                model="openai/gpt-oss-120b",
-                messages=messages,
-                tools=dynamic_tools,
-                tool_choice="auto",
-                max_tokens=350,
-                temperature=0.6
-            )
+            # Multi-turn Autonomous Tool Loop (up to 3 investigative steps)
+            for step in range(3):
+                completion = groq_client.chat.completions.create(
+                    model="openai/gpt-oss-120b",
+                    messages=messages,
+                    tools=dynamic_tools,
+                    tool_choice="auto",
+                    max_tokens=350,
+                    temperature=0.6
+                )
+                choice = completion.choices[0]
+                message = choice.message
 
-            choice = completion.choices[0]
-            message = choice.message
+                if not message.tool_calls:
+                    # Model provided final spoken response
+                    if message.content and message.content.strip():
+                        reply = message.content.strip()
+                        session_memory.add_turn("user", user_message)
+                        session_memory.add_turn("assistant", reply)
+                        return reply
+                    break
 
-            # Check if model requested tool call(s)
-            if message.tool_calls:
+                # Model requested tool calls
                 messages.append(message)
                 for tool_call in message.tool_calls:
                     fn_name = tool_call.function.name
@@ -68,26 +76,19 @@ async def process_user_turn(user_message: str) -> str:
                         "content": str(tool_output)
                     })
 
-                # Follow-up completion to synthesize tool results into final voice answer
-                followup = groq_client.chat.completions.create(
-                    model="openai/gpt-oss-120b",
-                    messages=messages,
-                    max_tokens=250,
-                    temperature=0.6
-                )
-                final_content = followup.choices[0].message.content
-                if final_content and final_content.strip():
-                    reply = final_content.strip()
-                    session_memory.add_turn("user", user_message)
-                    session_memory.add_turn("assistant", reply)
-                    return reply
-
-            # No tool call needed — direct conversational answer
-            if message.content and message.content.strip():
-                reply = message.content.strip()
+            # If 3 steps executed, generate final voice synthesis
+            final_turn = groq_client.chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=messages + [{"role": "user", "content": "Synthesize all investigative tool outputs into a single crisp, confident spoken Tanglish reply under 25 words."}],
+                max_tokens=250,
+                temperature=0.6
+            )
+            if final_turn.choices[0].message.content:
+                reply = final_turn.choices[0].message.content.strip()
                 session_memory.add_turn("user", user_message)
                 session_memory.add_turn("assistant", reply)
                 return reply
+
 
         except Exception as ge:
             print(f"[Brain Agent Error] Groq Tool Loop encountered error: {ge}. Attempting Gemini fallback...")
