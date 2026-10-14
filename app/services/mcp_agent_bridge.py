@@ -222,6 +222,35 @@ def get_dynamic_mcp_tools() -> List[Dict[str, Any]]:
                     "required": ["message"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "add_turso_reminder",
+                "description": "Schedule and save a new reminder or task into Turso Cloud database with natural date/time or Tanglish parsing.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task_text": {
+                            "type": "string",
+                            "description": "The task description to remember (e.g., 'Ram Birthday', 'Call Auditor')"
+                        },
+                        "time_phrase": {
+                            "type": "string",
+                            "description": "Natural date or Tanglish time (e.g. '25-Oct-2026 09:00 AM', 'tomorrow 9am', '10s', 'in 2 hours')"
+                        }
+                    },
+                    "required": ["task_text"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_turso_reminders",
+                "description": "Fetch all active scheduled reminders and pending alerts currently saved in Turso Cloud.",
+                "parameters": {"type": "object", "properties": {}}
+            }
         }
     ])
 
@@ -270,6 +299,23 @@ async def execute_mcp_or_system_tool(tool_name: str, args: Dict[str, Any]) -> st
             return search_drive_vault(args.get("query", ""))
         elif tool_name == "send_telegram_alert":
             return send_telegram_alert(args.get("message", ""))
+        elif tool_name in ["get_turso_reminders", "sgc_list_turso_reminders"]:
+            from aura_agent_core.services import list_active_reminders
+            reminders = await list_active_reminders()
+            if not reminders:
+                return "Boss, you have zero pending tasks in Turso Cloud. All clear!"
+            items = [f"#{r.get('id')}: {r.get('title')} (at {r.get('remind_at')} IST)" for r in reminders]
+            return f"Found {len(reminders)} active Turso reminders: " + "; ".join(items)
+        elif tool_name in ["add_turso_reminder", "sgc_add_turso_reminder"]:
+            task_t = args.get("task_text") or args.get("task") or "Reminder"
+            time_p = args.get("time_phrase") or args.get("when") or "tomorrow 9am"
+            from aura_agent_core.nlp_parser import parse_natural_time
+            from aura_agent_core.services import create_reminder
+            parsed = parse_natural_time(time_p)
+            if not parsed.get("success"):
+                return f"Could not parse reminder time '{time_p}'."
+            rem_id = await create_reminder(task_t, parsed["scheduled_iso"])
+            return f"Reminder #{rem_id} saved to Turso Cloud for '{task_t}' at {parsed['display']} ({parsed['scheduled_iso']} IST)."
     except Exception as e:
         logger.error(f"[Ecosystem Tool Error] '{tool_name}' failed: {e}")
         return f"Tool execution failed: {str(e)}"

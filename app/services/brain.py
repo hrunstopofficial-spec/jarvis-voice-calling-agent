@@ -61,6 +61,19 @@ async def process_user_turn(user_message: str) -> str:
         session_memory.add_turn("assistant", reply)
         return reply
 
+    if any(k in clean_msg for k in ["check reminder", "pending reminder", "list reminder", "active reminder", "reminders iruka", "enna reminder", "reminder check", "db la reminder", "db reminder", "reminder"]):
+        if any(q in clean_msg for q in ["check", "list", "active", "pending", "iruka", "enna", "paaru", "view", "db"]):
+            from aura_agent_core.services import list_active_reminders
+            reminders = await list_active_reminders()
+            if not reminders:
+                reply = "Boss, Turso Cloud DB-la pending reminders edhuvum illa. 0 MB bloat maintained!"
+            else:
+                items = [f"#{r['id']} {r['title']} ({r['remind_at']})" for r in reminders]
+                reply = f"Boss, Turso Cloud DB-la {len(reminders)} active reminders irukku: " + "; ".join(items) + ". Time vantha Telegram & phone call alert trigger aagum!"
+            session_memory.add_turn("user", user_message)
+            session_memory.add_turn("assistant", reply)
+            return reply
+
     # Filter to lean active voice tools to prevent Groq TPM rate limits (8000 TPM limit)
     essential_names = {
         'get_sgc_latest_bill', 'sgc_get_latest_bill',
@@ -68,7 +81,9 @@ async def process_user_turn(user_message: str) -> str:
         'get_sgc_bill_by_number', 'sgc_get_bill_by_number',
         'get_sgc_financial_overview', 'sgc_get_financial_overview',
         'sgc_get_customer_ledger', 'sgc_get_overdue_radar',
-        'get_pc_vitals', 'search_live_web', 'scrape_spinning_mills'
+        'get_pc_vitals', 'search_live_web', 'scrape_spinning_mills',
+        'add_turso_reminder', 'get_turso_reminders',
+        'sgc_add_turso_reminder', 'sgc_list_turso_reminders'
     }
     voice_tools = [t for t in dynamic_tools if t.get('function', {}).get('name') in essential_names]
     if not voice_tools:
