@@ -376,6 +376,47 @@
       },
       "monthFolder": "2026-10 (October 2026)",
       "monthFolderId": "15Cx1sTNIxaib30mPEVChHj6wAuZO8n9F"
+    },
+    {
+      "billNo": 10,
+      "date": "2026-10-14",
+      "customer": "Sowbhagiya Home Textiles",
+      "partyGst": "33AGSPR4149P1ZI",
+      "items": [
+        {
+          "id": "vgq0gi8qv0l",
+          "delNo": "684",
+          "poNo": "64",
+          "variety": "1/2 ddp wash unit",
+          "count": "10s",
+          "kattu": "15",
+          "kazhi": "6",
+          "rate": "456",
+          "amount": "6976.80"
+        }
+      ],
+      "status": "pending",
+      "payments": [],
+      "subtotal": 6976.8,
+      "cgst": 174.42000000000002,
+      "sgst": 174.42000000000002,
+      "netAmount": 7326,
+      "id": "tf80289rsb5",
+      "updatedAt": "2026-10-14T04:21:34.097Z",
+      "driveUrl": "https://drive.google.com/file/d/1MWPV8heR8q3OABsMJ-YN4FCv5sSk7dq-/view?usp=drivesdk",
+      "driveFileId": "1MWPV8heR8q3OABsMJ-YN4FCv5sSk7dq-",
+      "vaultFiles": {
+        "11KMBP0HHa2AFl30zjL8-a_-BQk9MgWM9": {
+          "fileId": "1MWPV8heR8q3OABsMJ-YN4FCv5sSk7dq-",
+          "webViewLink": "https://drive.google.com/file/d/1MWPV8heR8q3OABsMJ-YN4FCv5sSk7dq-/view?usp=drivesdk"
+        },
+        "155EqYOwPJ2Fc9QfqVSrZu5VnYzZgRcyZ": {
+          "fileId": "11TbhC1LTHUemZBwlq0OUHgBUpEK13Owp",
+          "webViewLink": "https://drive.google.com/file/d/11TbhC1LTHUemZBwlq0OUHgBUpEK13Owp/view?usp=drivesdk"
+        }
+      },
+      "monthFolder": "2026-10 (October 2026)",
+      "monthFolderId": "15Cx1sTNIxaib30mPEVChHj6wAuZO8n9F"
     }
   ],
   "sgc-countmap": [
