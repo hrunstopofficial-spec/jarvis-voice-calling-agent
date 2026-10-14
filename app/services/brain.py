@@ -74,6 +74,24 @@ async def process_user_turn(user_message: str) -> str:
             session_memory.add_turn("assistant", reply)
             return reply
 
+    if any(k in clean_msg for k in ["eppadi alert", "how do you alert", "how will you alert", "yapapdi allert", "how do you remind", "eppadi remind", "what tool do you use", "tool use", "phone app", "phone reminder", "how do u make", "running in pho"]):
+        reply = "Boss, unga phone app illa! Turso Cloud DB (AWS Mumbai)-la store panni, due time vanthone Telegram-ku alarm + direct incoming cloud call-la voice alert trigger pannuven. 0 MB bloat-la clean aagum!"
+        session_memory.add_turn("user", user_message)
+        session_memory.add_turn("assistant", reply)
+        return reply
+
+    if any(k in clean_msg for k in ["how can i check", "how to view", "enga paakuradhu", "eppadi check", "view that", "i want to check that"]):
+        from aura_agent_core.services import list_active_reminders
+        reminders = await list_active_reminders()
+        if not reminders:
+            reply = "Boss, phone app thevaiye illa! Turso Cloud-la check pannen, ippo 0 pending tasks irukku."
+        else:
+            items = [f"#{r['id']} {r['title']} on {r['remind_at']}" for r in reminders]
+            reply = f"Boss, phone app thevaiye illa! Turso Cloud-la {len(reminders)} tasks irukku: " + "; ".join(items) + ". Direct-aa en kitteye kettu therinjukalam!"
+        session_memory.add_turn("user", user_message)
+        session_memory.add_turn("assistant", reply)
+        return reply
+
     # Filter to lean active voice tools to prevent Groq TPM rate limits (8000 TPM limit)
     essential_names = {
         'get_sgc_latest_bill', 'sgc_get_latest_bill',
