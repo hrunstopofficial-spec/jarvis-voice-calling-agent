@@ -15,7 +15,7 @@ class ChatTurnRequest(BaseModel):
     message: str
     language: Optional[str] = "en-IN"
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
     return {"status": "healthy", "service": "continuous-calling-agent"}
 

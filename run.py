@@ -29,7 +29,7 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 # Mount API routes
 app.include_router(api_router, prefix="/api")
 
-@app.get("/", response_class=HTMLResponse)
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def serve_index():
     index_file = os.path.join(static_dir, "index.html")
     if os.path.exists(index_file):
