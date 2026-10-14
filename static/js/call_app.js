@@ -219,3 +219,31 @@ window.addEventListener('load', () => {
 document.addEventListener('click', () => {
     if (!audioContext) startRingtone();
 }, { once: true });
+
+// Manual Text Chat Input Handler
+async function sendManualChat() {
+    const input = document.getElementById('chatInput');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+
+    // Transition to active call HUD if currently in ringing state
+    if (!isCallActive) {
+        isCallActive = true;
+        const orb = document.getElementById('hudOrb');
+        if (orb) {
+            orb.classList.remove('ringing');
+            orb.classList.add('pulse');
+        }
+        document.getElementById('phoneContainer').classList.add('active-call');
+        document.getElementById('incomingControls').classList.add('hidden');
+        document.getElementById('activeControls').classList.remove('hidden');
+        document.getElementById('callClock').classList.remove('hidden');
+        setupSpeechRecognition();
+    }
+
+    appendTranscript("Mukil", text);
+    await sendTurnToJARVIS(text);
+}
+
